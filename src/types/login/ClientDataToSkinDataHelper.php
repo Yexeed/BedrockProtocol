@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\protocol\types\login;
 
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\types\skin\PersonaPieceTintColor;
 use pocketmine\network\mcpe\protocol\types\skin\PersonaSkinPiece;
 use pocketmine\network\mcpe\protocol\types\skin\SkinAnimation;
@@ -53,15 +54,38 @@ final class ClientDataToSkinDataHelper{
 				$animation->AnimationExpression
 			);
 		}
+
+		if(isset($clientData->SkinGeometryDataEngineVersion)){
+			$geometryDataEngineVersion = self::safeB64Decode($clientData->SkinGeometryDataEngineVersion, "SkinGeometryDataEngineVersion"); //yes, they actually base64'd the version!
+		}else{
+			$geometryDataEngineVersion = ProtocolInfo::MINECRAFT_VERSION_NETWORK;
+		}
+
+		$skinData = self::safeB64Decode($clientData->SkinData, "SkinData");
+		if(!isset($clientData->SkinImageHeight) || !isset($clientData->SkinImageWidth)) {
+			$skinImage = SkinImage::fromLegacy($skinData);
+		}else{
+			$skinImage = new SkinImage($clientData->SkinImageHeight, $clientData->SkinImageWidth, $skinData);
+		}
+
+		$capeData = self::safeB64Decode($clientData->CapeData, "CapeData");
+		if($capeData !== "") {
+			if(!isset($clientData->CapeImageHeight) || !isset($clientData->CapeImageWidth)) {
+				$capeImage = SkinImage::fromLegacy($capeData);
+			}else{
+				$capeImage = new SkinImage($clientData->CapeImageHeight, $clientData->CapeImageWidth, $capeData);
+			}
+		}
+
 		return new SkinData(
 			$clientData->SkinId,
 			$clientData->PlayFabId,
 			self::safeB64Decode($clientData->SkinResourcePatch, "SkinResourcePatch"),
-			new SkinImage($clientData->SkinImageHeight, $clientData->SkinImageWidth, self::safeB64Decode($clientData->SkinData, "SkinData")),
+			$skinImage,
 			$animations,
-			new SkinImage($clientData->CapeImageHeight, $clientData->CapeImageWidth, self::safeB64Decode($clientData->CapeData, "CapeData")),
+			$capeImage ?? new SkinImage(0, 0, ""),
 			self::safeB64Decode($clientData->SkinGeometryData, "SkinGeometryData"),
-			self::safeB64Decode($clientData->SkinGeometryDataEngineVersion, "SkinGeometryDataEngineVersion"), //yes, they actually base64'd the version!
+			$geometryDataEngineVersion,
 			self::safeB64Decode($clientData->SkinAnimationData, "SkinAnimationData"),
 			$clientData->CapeId,
 			null,

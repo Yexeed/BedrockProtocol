@@ -133,8 +133,15 @@ class PacketSerializer extends BinaryStream{
 		}
 		$capeData = $this->getSkinImage();
 		$geometryData = $this->getString();
-		$geometryDataVersion = $this->getString();
+		if($p_1_17_30 = ($this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_30)){
+			$geometryDataVersion = $this->getString();
+		}
 		$animationData = $this->getString();
+		if(!$p_1_17_30){
+			$premium = $this->getBool();
+			$persona = $this->getBool();
+			$capeOnClassic = $this->getBool();
+		}
 		$capeId = $this->getString();
 		$fullSkinId = $this->getString();
 		$armSize = $this->getString();
@@ -164,10 +171,12 @@ class PacketSerializer extends BinaryStream{
 			);
 		}
 
-		$premium = $this->getBool();
-		$persona = $this->getBool();
-		$capeOnClassic = $this->getBool();
-		$isPrimaryUser = $this->getBool();
+		if($p_1_17_30){
+			$premium = $this->getBool();
+			$persona = $this->getBool();
+			$capeOnClassic = $this->getBool();
+			$isPrimaryUser = $this->getBool();
+		}
 		if($this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_63){
 			$override = $this->getBool();
 		}
@@ -211,7 +220,14 @@ class PacketSerializer extends BinaryStream{
 		}
 		$this->putSkinImage($skin->getCapeImage());
 		$this->putString($skin->getGeometryData());
-		$this->putString($skin->getGeometryDataEngineVersion());
+		if($p_1_17_30 = ($this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_30)){
+			$this->putString($skin->getGeometryDataEngineVersion());
+		}
+		if(!$p_1_17_30){
+			$this->putBool($skin->isPremium());
+			$this->putBool($skin->isPersona());
+			$this->putBool($skin->isPersonaCapeOnClassic());
+		}
 		$this->putString($skin->getAnimationData());
 		$this->putString($skin->getCapeId());
 		$this->putString($skin->getFullSkinId());
@@ -233,10 +249,12 @@ class PacketSerializer extends BinaryStream{
 				$this->putString($color);
 			}
 		}
-		$this->putBool($skin->isPremium());
-		$this->putBool($skin->isPersona());
-		$this->putBool($skin->isPersonaCapeOnClassic());
-		$this->putBool($skin->isPrimaryUser());
+		if($p_1_17_30){
+			$this->putBool($skin->isPremium());
+			$this->putBool($skin->isPersona());
+			$this->putBool($skin->isPersonaCapeOnClassic());
+			$this->putBool($skin->isPrimaryUser());
+		}
 		if($this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_63){
 			$this->putBool($skin->isOverride());
 		}

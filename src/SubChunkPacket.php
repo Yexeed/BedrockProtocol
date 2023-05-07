@@ -49,11 +49,15 @@ class SubChunkPacket extends DataPacket implements ClientboundPacket{
 	public function getEntries() : ListWithBlobHashes|ListWithoutBlobHashes{ return $this->entries; }
 
 	protected function decodePayload(PacketSerializer $in) : void{
-		$cacheEnabled = $in->getBool();
-		$this->dimension = $in->getVarInt();
-		$this->baseSubChunkPosition = SubChunkPosition::read($in);
+		$newSubChunkFormat = $in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_18_10;
 
-		$count = $in->getLInt();
+		$cacheEnabled = $newSubChunkFormat ? $in->getBool() : $in->getProtocolId() === ProtocolInfo::PROTOCOL_1_18_0;
+		$this->dimension = $in->getVarInt();
+		if($newSubChunkFormat){
+			$this->baseSubChunkPosition = SubChunkPosition::read($in);
+		}
+
+		$count = $newSubChunkFormat ? $in->getLInt() : 1;
 		if($cacheEnabled){
 			$entries = [];
 			for($i = 0; $i < $count; $i++){
@@ -70,11 +74,18 @@ class SubChunkPacket extends DataPacket implements ClientboundPacket{
 	}
 
 	protected function encodePayload(PacketSerializer $out) : void{
-		$out->putBool($this->entries instanceof ListWithBlobHashes);
+		$newSubChuhkFormat = $out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_18_10;
+		if($newSubChuhkFormat){
+			$out->putBool($this->entries instanceof ListWithBlobHashes);
+		}elseif($this->entries instanceof ListWithBlobHashes && $out->getProtocolId() !== ProtocolInfo::PROTOCOL_1_18_0){
+			throw new \InvalidArgumentException("SubChunkPacket does not support ListWithBlobHashes lower then 1.18.0");
+		}
 		$out->putVarInt($this->dimension);
-		$this->baseSubChunkPosition->write($out);
+		if($newSubChuhkFormat){
+			$this->baseSubChunkPosition->write($out);
 
-		$out->putLInt(count($this->entries->getEntries()));
+			$out->putLInt(count($this->entries->getEntries()));
+		}
 
 		foreach($this->entries->getEntries() as $entry){
 			$entry->write($out);

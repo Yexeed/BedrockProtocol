@@ -147,7 +147,9 @@ final class LevelSettings{
 		$this->limitedWorldWidth = $in->getLInt();
 		$this->limitedWorldLength = $in->getLInt();
 		$this->isNewNether = $in->getBool();
-		$this->eduSharedUriResource = EducationUriResource::read($in);
+		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_30){
+			$this->eduSharedUriResource = EducationUriResource::read($in);
+		}
 		$this->experimentalGameplayOverride = $in->readOptional(\Closure::fromCallable([$in, 'getBool']));
 		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_20){
 			$this->chatRestrictionLevel = $in->getByte();
@@ -211,7 +213,9 @@ final class LevelSettings{
 		$out->putLInt($this->limitedWorldWidth);
 		$out->putLInt($this->limitedWorldLength);
 		$out->putBool($this->isNewNether);
-		($this->eduSharedUriResource ?? new EducationUriResource("", ""))->write($out);
+		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_30){
+			($this->eduSharedUriResource ?? new EducationUriResource("", ""))->write($out);
+		}
 		$out->writeOptional($this->experimentalGameplayOverride, \Closure::fromCallable([$out, 'putBool']));
 		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_20){
 			$out->putByte($this->chatRestrictionLevel);

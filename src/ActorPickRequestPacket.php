@@ -37,13 +37,17 @@ class ActorPickRequestPacket extends DataPacket implements ServerboundPacket{
 	protected function decodePayload(PacketSerializer $in) : void{
 		$this->actorUniqueId = $in->getLLong();
 		$this->hotbarSlot = $in->getByte();
-		$this->addUserData = $in->getBool();
+		if($in->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_30){
+			$this->addUserData = $in->getBool();
+		}
 	}
 
 	protected function encodePayload(PacketSerializer $out) : void{
 		$out->putLLong($this->actorUniqueId);
 		$out->putByte($this->hotbarSlot);
-		$out->putBool($this->addUserData);
+		if($out->getProtocolId() >= ProtocolInfo::PROTOCOL_1_17_30){
+			$out->putBool($this->addUserData);
+		}
 	}
 
 	public function handle(PacketHandlerInterface $handler) : bool{
